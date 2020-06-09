@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 import shortid from "shortid";
 
-const productSchema = new mongoose.Schema({
+const ProductSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
   price: {
-    type: String,
+    type: Number,
     required: true,
   },
   sku: {
@@ -26,4 +26,4 @@ const productSchema = new mongoose.Schema({
 });
 
 export default mongoose.models.Product ||
-  mongoose.model("Product", productSchema);
+  mongoose.model("Product", ProductSchema);

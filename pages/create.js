@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -9,6 +9,9 @@ import {
   Header,
   Icon,
 } from "semantic-ui-react";
+import axios from "axios";
+import baseUrl from "../utils/baseUrl";
+import catchErrors from "../utils/catchErrors";
 
 const INITIAL_PRODUCT = {
   name: "",
@@ -21,6 +24,9 @@ function CreateProduct() {
   const [product, setProduct] = useState(INITIAL_PRODUCT);
   const [mediaPreview, setMediaPreview] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [disabled, setDisabled] = useState(true);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -32,12 +38,40 @@ function CreateProduct() {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(product);
-    setProduct(INITIAL_PRODUCT);
-    setSuccess(true);
+  const handleImageUpload = async () => {
+    const data = new FormData();
+    data.append("file", product.media);
+    data.append("upload_preset", "Mido-React-Reserve");
+    data.append("cloud_name", "dxwhsl0wg");
+    const response = await axios.post(process.env.CLOUDINARY_URL, data);
+    const mediaUrl = response.data.url;
+    return mediaUrl;
   };
+
+  const handleSubmit = async (e) => {
+    try {
+      e.preventDefault();
+      setLoading(true);
+      setError("");
+      const mediaUrl = await handleImageUpload();
+      const url = `${baseUrl}/api/product`;
+      const { name, description, price } = product;
+      const payload = { name, description, price, mediaUrl };
+      const response = await axios.post(url, payload);
+      console.log(response);
+      setProduct(INITIAL_PRODUCT);
+      setSuccess(true);
+    } catch (error) {
+      catchErrors(error, setError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const isProduct = Object.values(product).every((el) => Boolean(el));
+    isProduct ? setDisabled(false) : setDisabled(true);
+  }, [product]);
 
   return (
     <>
@@ -45,7 +79,13 @@ function CreateProduct() {
         <Icon name="add" color="orange" />
         Create New Product
       </Header>
-      <Form success={success} onSubmit={handleSubmit}>
+      <Form
+        loading={loading}
+        error={Boolean(error)}
+        success={success}
+        onSubmit={handleSubmit}
+      >
+        <Message error header="Opps!" content={error} />
         <Message
           success
           icon="check"
@@ -93,6 +133,7 @@ function CreateProduct() {
         />
         <Form.Field
           control={Button}
+          disabled={disabled || loading}
           color="blue"
           icon="pencil alternate"
           content="Submit"
