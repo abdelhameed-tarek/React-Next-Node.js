@@ -4,9 +4,12 @@ import axios from "axios";
 import baseUrl from "../../utils/baseUrl";
 import { useRouter } from "next/router";
 
-function ProductAttributes({ description, _id }) {
+function ProductAttributes({ description, _id, user }) {
   const [modal, setModal] = useState(false);
   const router = useRouter();
+  const isRoot = user && user.role === "root";
+  const isAdmin = user && user.role === "admin";
+  const isRootOrAdmin = isRoot || isAdmin;
 
   const handleDelete = async () => {
     const url = `${baseUrl}/api/product`;
@@ -19,28 +22,32 @@ function ProductAttributes({ description, _id }) {
     <>
       <Header as="h3">About This Product</Header>
       <p>{description}</p>
-      <Button
-        icon="trash alternate outline"
-        color="red"
-        content="Delete Product"
-        onClick={() => setModal(true)}
-      />
-      <Modal open={modal} dimmer="blurring">
-        <Modal.Header>Confirm Delete</Modal.Header>
-        <Modal.Content>
-          <p>Are You Sure You Want To Delete This Product</p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button content="Cancel" onClick={() => setModal(false)} />
+      {isRootOrAdmin && (
+        <>
           <Button
-            negative
-            icon="trash"
-            labelPosition="right"
-            content="Delete"
-            onClick={handleDelete}
+            icon="trash alternate outline"
+            color="red"
+            content="Delete Product"
+            onClick={() => setModal(true)}
           />
-        </Modal.Actions>
-      </Modal>
+          <Modal open={modal} dimmer="blurring">
+            <Modal.Header>Confirm Delete</Modal.Header>
+            <Modal.Content>
+              <p>Are You Sure You Want To Delete This Product</p>
+            </Modal.Content>
+            <Modal.Actions>
+              <Button content="Cancel" onClick={() => setModal(false)} />
+              <Button
+                negative
+                icon="trash"
+                labelPosition="right"
+                content="Delete"
+                onClick={handleDelete}
+              />
+            </Modal.Actions>
+          </Modal>
+        </>
+      )}
     </>
   );
 }
